@@ -20,12 +20,14 @@ public class RoomManager : MonoBehaviourPunCallbacks
     public GameObject nameTagPrefab; // Referencia a tu prefab de la etiqueta de nombre.
     public float nameTagHeightOffset = 2.5f; // Altura sobre el jugador.
 
+    // ------------------------------------------------------------------------------------------------
     [Header("UI")]
     public GameObject victoryScreen;
     public TextMeshProUGUI victoryText;
 
     private List<GameObject> alivePlayers = new List<GameObject>();
     private bool gameEnded = false;
+    // ------------------------------------------------------------------------------------------------
 
     void Awake()
     {
@@ -86,6 +88,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     private void InstantiatePlayerSkin(GameObject playerObject)
     {
+        // Tu método actual para instanciar la skin
         string skinName = Singleton.Instance.GetPlayerSkin();
 
         if (string.IsNullOrEmpty(skinName))
@@ -103,7 +106,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         }
 
         GameObject skinInstance = Instantiate(skinPrefab, playerObject.transform);
-        skinInstance.transform.localPosition = new Vector3(0f, -1f, 0f); // Offset en Y
+        skinInstance.transform.localPosition = new Vector3(0f, -1f, 0f);
         skinInstance.transform.localRotation = Quaternion.identity;
 
         Debug.Log($"Skin '{skinName}' has been instantiated on the local player object with an offset.");
@@ -178,6 +181,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         if (victoryScreen != null && victoryText != null)
         {
             victoryScreen.SetActive(true);
+            victoryText.text = $"Winner: {winner}";
         }
     }
 }
