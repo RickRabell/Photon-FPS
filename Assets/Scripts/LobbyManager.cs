@@ -77,6 +77,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         }
     }
 
+    // Dentro de LobbyManager.OnConfirmName()
     public void OnConfirmName()
     {
         string playerName = nameInput.text;
@@ -84,6 +85,10 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         {
             Singleton.Instance.SetLocalPlayerName(playerName);
             nameCanvas.gameObject.SetActive(false);
+
+            // Guardar el nombre en las propiedades del jugador.
+            // Esto es visible para todos los clientes en la sala.
+            PhotonNetwork.LocalPlayer.NickName = playerName;
             UpdatePlayerNameTexts();
         }
     }
