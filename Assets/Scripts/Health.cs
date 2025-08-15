@@ -6,7 +6,8 @@ using UnityEngine;
 
 public class Health : MonoBehaviour
 {
-    public int health;
+    [SerializeField] public int health = 100;
+    [SerializeField] public int maxHealth = 100;
 
     public bool isDead { get; private set; } = false;
 
@@ -63,6 +64,6 @@ public class Health : MonoBehaviour
                 RoomManager.instance.OnDestroy();
             }
         }
-        Destroy(gameObject, 2f);
+        Destroy(gameObject);
     }
 }
