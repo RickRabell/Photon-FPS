@@ -9,7 +9,9 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     [Header("Player Setup")]
     public GameObject player;
-    public Transform spawnPoint;
+    public Transform[] spawnPoints;
+    private string playerPrefabName = "Player";
+    private bool spawned = false;
 
     [Header("Camera")]
     public GameObject roomCam;
@@ -31,11 +33,30 @@ public class RoomManager : MonoBehaviourPunCallbacks
     void Start()
     {
         Debug.Log("Connecting...");
+
+        if (PhotonNetwork.InRoom && PhotonNetwork.IsConnectedAndReady)
+        {
+            SpawnPlayers();
+        }
     }
 
-    public void SpawnPlayer()
+    public override void OnJoinedRoom() => SpawnPlayers();
+
+    public void SpawnPlayers()
     {
+        /*
         GameObject _player = PhotonNetwork.Instantiate(player.name, spawnPoint.position, Quaternion.identity);
+
+        if (_player.GetComponent<PhotonView>().IsMine)
+        {
+            _player.GetComponent<Health>().isLocalPlayer = true;
+        }
+        */
+        if (spawned) return;
+
+        Transform point = GetSpawnPoint();
+        GameObject _player = PhotonNetwork.Instantiate(playerPrefabName, point.position, point.rotation);
+        spawned = true;
 
         if (_player.GetComponent<PhotonView>().IsMine)
         {
@@ -46,6 +67,20 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
         alivePlayers.Add(_player);
         _player.GetComponent<Health>().onDeath += OnPlayerDeath;
+
+        roomCam.GetComponentInChildren<Canvas>().enabled = false;
+    }
+
+    public Transform GetSpawnPoint()
+    {
+        if(spawnPoints == null || spawnPoints.Length == 0)
+        {
+            Debug.LogError("No spawn points defined!");
+            return transform;
+        }   
+
+        int i = (PhotonNetwork.LocalPlayer.ActorNumber - 1) % spawnPoints.Length;
+        return spawnPoints[i];
     }
 
     private void OnPlayerDeath(GameObject deadPlayer)
