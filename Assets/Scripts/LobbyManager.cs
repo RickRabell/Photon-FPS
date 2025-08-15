@@ -34,6 +34,8 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     [SerializeField]
     private Button playButton;
 
+    private string sceneName;
+
     private void Start()
     {
         PhotonNetwork.JoinLobby();
@@ -93,8 +95,9 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         Debug.Log("Disconnected");
     }
 
-    public void PlayGame()
+    public void PlayGame(string SceneName)
     {
+        sceneName = SceneName;
         RoomOptions roomOptions = new RoomOptions();
         roomOptions.MaxPlayers = 10;
         roomOptions.IsVisible = true;
@@ -106,7 +109,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     public override void OnJoinedRoom()
     {
         Debug.Log("Joined Room");
-        PhotonNetwork.LoadLevel("SampleScene");
+        PhotonNetwork.LoadLevel(sceneName);
     }
 
     // Called when the player fails to join a room

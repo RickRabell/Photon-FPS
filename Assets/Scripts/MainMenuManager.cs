@@ -54,8 +54,8 @@ public class MainMenuManager : MonoBehaviourPunCallbacks
     }
 
     // Function to be called when the button is pressed
-    public void GoToLobby()
+    public void GoToLobby(string SceneName)
     {
-        SceneManager.LoadScene("Lobby");
+        SceneManager.LoadScene(SceneName);
     }
 }
