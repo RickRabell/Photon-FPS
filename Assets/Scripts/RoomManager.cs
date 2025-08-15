@@ -51,7 +51,10 @@ public class RoomManager : MonoBehaviourPunCallbacks
         if (spawned) return;
 
         Transform point = GetSpawnPoint();
-        GameObject _player = PhotonNetwork.Instantiate(playerPrefabName, point.position, point.rotation);
+        // Pasa el nombre del skin como dato de instanciación ------------------
+        string skinName = Singleton.Instance.GetPlayerSkin();
+        object[] instantiationData = new object[] { skinName };
+        GameObject _player = PhotonNetwork.Instantiate(playerPrefabName, point.position, point.rotation, 0, instantiationData);
         spawned = true;
 
         if (_player.GetComponent<PhotonView>().IsMine)
