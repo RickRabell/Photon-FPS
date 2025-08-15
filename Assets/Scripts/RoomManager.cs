@@ -1,5 +1,7 @@
 using UnityEngine;
 using Photon.Pun;
+using System.Collections.Generic;
+using TMPro;
 
 public class RoomManager : MonoBehaviourPunCallbacks
 {
@@ -14,6 +16,15 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     [Header("Room")]
     public string roomName = "test";
+
+    // ------------------------------------------------------------------------------------------------
+    [Header("UI")]
+    public GameObject victoryScreen;
+    public TextMeshPro victoryText;
+
+    private List<GameObject> alivePlayers = new List<GameObject>();
+    private bool gameEnded = false;
+    // ------------------------------------------------------------------------------------------------
 
     void Awake()
     {
@@ -56,13 +67,74 @@ public class RoomManager : MonoBehaviourPunCallbacks
     {
         GameObject _player = PhotonNetwork.Instantiate(player.name, spawnPoint.position, Quaternion.identity);
 
-        // Solo el jugador local ejecuta esto
         if (_player.GetComponent<PhotonView>().IsMine)
         {
-            // Marca como jugador local
             _player.GetComponent<Health>().isLocalPlayer = true;
+        }
 
-           
+        // ------------------------------------------------------------------------------------------------
+
+        alivePlayers.Add(_player);
+        _player.GetComponent<Health>().onDeath += OnPlayerDeath;
+    }
+
+    private void OnPlayerDeath(GameObject deadPlayer)
+    {
+        alivePlayers.Remove(deadPlayer);
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            CheckForWinner();
+        }
+    }
+
+    public void OnDestroy()
+    {
+        foreach (var player in alivePlayers)
+        {
+            if (player != null)
+            {
+                var playerHealth = player.GetComponent<Health>();
+                if (playerHealth != null)
+                {
+                    playerHealth.onDeath -= OnPlayerDeath;
+                }
+            }
+        }
+    }
+
+    private void CheckForWinner()
+    {
+        int aliveCount = 0;
+        string winnerName = "";
+
+        foreach (var livePlayer in alivePlayers)
+        {
+            if (livePlayer != null)
+            {
+                var playerNickname = livePlayer.GetComponent<PhotonView>();
+                if (playerNickname != null && !livePlayer.GetComponent<Health>().isDead)
+                {
+                    aliveCount++;
+                    winnerName = playerNickname.Owner.NickName;
+                }
+            }
+        }
+
+        if (aliveCount == 1 && !gameEnded)
+        {
+            photonView.RPC("ShowVictoryScreen", RpcTarget.All, winnerName);
+            gameEnded = true;
+        }
+    }
+
+    [PunRPC]
+    private void ShowVictoryScreen(string winner)
+    {
+        if (victoryScreen != null && victoryText != null)
+        {
+            victoryScreen.SetActive(true);
+            victoryText.text = $"Winner: {winner}";
         }
     }
 }
