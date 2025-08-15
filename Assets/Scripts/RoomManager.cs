@@ -44,14 +44,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     public void SpawnPlayers()
     {
-        /*
-        GameObject _player = PhotonNetwork.Instantiate(player.name, spawnPoint.position, Quaternion.identity);
-
-        if (_player.GetComponent<PhotonView>().IsMine)
-        {
-            _player.GetComponent<Health>().isLocalPlayer = true;
-        }
-        */
         if (spawned) return;
 
         Transform point = GetSpawnPoint();
@@ -61,9 +53,10 @@ public class RoomManager : MonoBehaviourPunCallbacks
         if (_player.GetComponent<PhotonView>().IsMine)
         {
             _player.GetComponent<Health>().isLocalPlayer = true;
-        }
 
-        // ------------------------------------------------------------------------------------------------
+            // Llama a la lógica para instanciar la skin para el jugador local.
+            InstantiatePlayerSkin(_player);
+        }
 
         alivePlayers.Add(_player);
         Debug.Log($"Player spawned: {_player.name} at {point.position} with {PhotonNetwork.LocalPlayer.ActorNumber}");
@@ -72,13 +65,42 @@ public class RoomManager : MonoBehaviourPunCallbacks
         roomCam.GetComponentInChildren<Canvas>().enabled = false;
     }
 
+    private void InstantiatePlayerSkin(GameObject playerObject)
+    {
+        string skinName = Singleton.Instance.GetPlayerSkin();
+
+        if (string.IsNullOrEmpty(skinName))
+        {
+            Debug.LogWarning("No skin selected from the lobby.");
+            return;
+        }
+
+        GameObject skinPrefab = Resources.Load<GameObject>(skinName);
+
+        if (skinPrefab == null)
+        {
+            Debug.LogError($"Skin prefab '{skinName}' not found in Resources folder.");
+            return;
+        }
+
+        // ¡Este es el cambio clave! La skin se instancia como hijo del objeto principal del jugador.
+        GameObject skinInstance = Instantiate(skinPrefab, playerObject.transform);
+
+        // Es posible que necesites ajustar la posición, rotación y escala aquí
+        // para que la skin encaje correctamente en tu personaje.
+        skinInstance.transform.localPosition = new Vector3(0f, -1f, 0f);
+        skinInstance.transform.localRotation = Quaternion.identity;
+
+        Debug.Log($"Skin '{skinName}' has been instantiated on the local player object.");
+    }
+
     public Transform GetSpawnPoint()
     {
-        if(spawnPoints == null || spawnPoints.Length == 0)
+        if (spawnPoints == null || spawnPoints.Length == 0)
         {
             Debug.LogError("No spawn points defined!");
             return transform;
-        }   
+        }
 
         int i = (PhotonNetwork.LocalPlayer.ActorNumber - 1) % spawnPoints.Length;
         return spawnPoints[i];

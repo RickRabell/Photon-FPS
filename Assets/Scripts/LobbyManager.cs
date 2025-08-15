@@ -111,6 +111,12 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         {
             Debug.LogWarning($"Skin prefab '{skinName}' not found in Resources.");
         }
+
+        // Call SetPlayerSkin on Singleton
+        if (Singleton.Instance != null)
+        {
+            Singleton.Instance.SetPlayerSkin(skinName);
+        }
     }
 
     public override void OnJoinedLobby()
