@@ -32646,7 +32646,7 @@ MonoBehaviour:
   - {fileID: 576246021}
   - {fileID: 322539263}
   roomCam: {fileID: 776049771}
-  victoryScreen: {fileID: 3018823500599726254, guid: 0d5d818c7652b8142afba95b4aec9c0f, type: 3}
+  victoryScreen: {fileID: 3667774553858304013, guid: 9a1d3918330c5aa42866c53e1f828ecb, type: 3}
   victoryText: {fileID: 0}
 --- !u!4 &1211608790
 Transform:
