@@ -1,3 +1,4 @@
+using Photon.Pun;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -14,34 +15,21 @@ public class Singleton
         }
     }
 
-    private List<string> _playerNames = new List<string>();
-    private const int MaxPlayers = 10;
+    // NOTE: The player name list logic is removed as Photon handles this.
+    // We only keep the skin-related logic here.
+
+    private string localPlayerName;
     private string _selectedSkin;
 
-    public bool AddPlayerName(string name)
+    public void SetLocalPlayerName(string name)
     {
-        if (_playerNames.Count >= MaxPlayers || string.IsNullOrWhiteSpace(name))
-        {
-            return false;
-        }
-
-        _playerNames.Add(name);
-        return true;
+        PhotonNetwork.NickName = name;
+        this.localPlayerName = name;
     }
 
-    public bool RemovePlayerName(string name)
+    public string GetLocalPlayerName()
     {
-        return _playerNames.Remove(name);
-    }
-
-    public void ClearPlayerNames()
-    {
-        _playerNames.Clear();
-    }
-    
-    public List<string> GetPlayerNames()
-    {
-        return new List<string>(_playerNames);
+        return PhotonNetwork.NickName;
     }
 
     public void SetPlayerSkin(string skin)
