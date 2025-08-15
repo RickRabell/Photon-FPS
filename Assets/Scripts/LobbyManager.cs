@@ -36,6 +36,9 @@ public class LobbyManager : MonoBehaviourPunCallbacks
 
     private string sceneName;
 
+    [SerializeField]
+    private GameObject skinView; // GameObject to hold the skin preview
+
     private void Start()
     {
         PhotonNetwork.JoinLobby();
@@ -82,6 +85,26 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     {
         Singleton.Instance.SetPlayerSkin(skinName);
         playButton.interactable = true;
+
+        if (skinView != null)
+        {
+            for (int i = skinView.transform.childCount - 1; i >= 0; i--)
+            {
+                Destroy(skinView.transform.GetChild(i).gameObject);
+            }
+        }
+
+        GameObject skinPrefab = Resources.Load<GameObject>(skinName);
+        if (skinPrefab != null)
+        {
+            GameObject skinInstance = Instantiate(skinPrefab, skinView.transform);
+            skinInstance.transform.localPosition = Vector3.zero;
+            skinInstance.transform.localEulerAngles = Vector3.zero;
+        }
+        else
+        {
+            Debug.LogWarning($"Skin prefab '{skinName}' not found in Resources.");
+        }
     }
 
     public override void OnJoinedLobby()
