@@ -19,7 +19,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     // ------------------------------------------------------------------------------------------------
     [Header("UI")]
     public GameObject victoryScreen;
-    public TextMeshPro victoryText;
+    public TextMeshProUGUI victoryText;
 
     private List<GameObject> alivePlayers = new List<GameObject>();
     private bool gameEnded = false;
@@ -66,6 +66,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         // ------------------------------------------------------------------------------------------------
 
         alivePlayers.Add(_player);
+        Debug.Log($"Player spawned: {_player.name} at {point.position} with {PhotonNetwork.LocalPlayer.ActorNumber}");
         _player.GetComponent<Health>().onDeath += OnPlayerDeath;
 
         roomCam.GetComponentInChildren<Canvas>().enabled = false;
@@ -126,10 +127,11 @@ public class RoomManager : MonoBehaviourPunCallbacks
             }
         }
 
-        if ((aliveCount == 1 || aliveCount == 0) && !gameEnded)
+        if ((aliveCount == 1) && !gameEnded)
         {
             photonView.RPC("ShowVictoryScreen", RpcTarget.All, winnerName);
             gameEnded = true;
+            Debug.Log($"Game ended. Winner: {winnerName}");
         }
     }
 
