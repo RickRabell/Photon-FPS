@@ -14,9 +14,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
     [Header("Camera")]
     public GameObject roomCam;
 
-    [Header("Room")]
-    public string roomName = "test";
-
     // ------------------------------------------------------------------------------------------------
     [Header("UI")]
     public GameObject victoryScreen;
@@ -34,33 +31,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
     void Start()
     {
         Debug.Log("Connecting...");
-        PhotonNetwork.ConnectUsingSettings();
-    }
-
-    public override void OnConnectedToMaster()
-    {
-        base.OnConnectedToMaster();
-        Debug.Log("Connected to Server");
-
-        PhotonNetwork.JoinLobby();
-    }
-
-    public override void OnJoinedLobby()
-    {
-        base.OnJoinedLobby();
-        Debug.Log("We're in the lobby");
-
-        PhotonNetwork.JoinOrCreateRoom(roomName, null, null);
-    }
-
-    public override void OnJoinedRoom()
-    {
-        base.OnJoinedRoom();
-        Debug.Log("We're connected and in a room now!");
-
-        if (roomCam != null) roomCam.SetActive(false);
-
-        SpawnPlayer();
     }
 
     public void SpawnPlayer()
