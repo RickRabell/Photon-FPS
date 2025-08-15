@@ -18296,7 +18296,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &657853936
 RectTransform:
   m_ObjectHideFlags: 0
@@ -32885,6 +32885,8 @@ MonoBehaviour:
   - {fileID: 576246021}
   - {fileID: 322539263}
   roomCam: {fileID: 776049771}
+  nameTagPrefab: {fileID: 0}
+  nameTagHeightOffset: 2.5
   victoryScreen: {fileID: 404177140}
   victoryText: {fileID: 2072221681}
 --- !u!4 &1211608790
@@ -49266,7 +49268,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1882055802
 RectTransform:
   m_ObjectHideFlags: 0
