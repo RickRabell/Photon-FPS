@@ -2,15 +2,15 @@ using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
-    public float walkSpeed = 4f;
-    public float sprintSpeed = 14f;
+    public float walkSpeed = 150f;
+    public float sprintSpeed = 150f;
     public float maxVelocityChange = 10f;
 
     [Space]
-    public float airControl = 0.5f;
+    public float airControl = 0.8f;
 
     [Space]
-    public float jumpHeight = 7f;
+    public float jumpHeight = 10f;
 
     private Vector2 input;
     private Rigidbody rb;
@@ -23,6 +23,7 @@ public class Movement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
+        sprintSpeed = walkSpeed + (walkSpeed * 0.3f);
     }
 
     void Update()
