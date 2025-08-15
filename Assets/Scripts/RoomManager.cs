@@ -126,7 +126,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
             }
         }
 
-        if (aliveCount == 1 && !gameEnded)
+        if ((aliveCount == 1 || aliveCount == 0) && !gameEnded)
         {
             photonView.RPC("ShowVictoryScreen", RpcTarget.All, winnerName);
             gameEnded = true;
@@ -139,7 +139,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         if (victoryScreen != null && victoryText != null)
         {
             victoryScreen.SetActive(true);
-            victoryText.text = $"Winner: {winner}";
+            //victoryText.text = $"Winner: {winner}";
         }
     }
 }
