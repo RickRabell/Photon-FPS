@@ -50,7 +50,7 @@ public class Health : MonoBehaviour
     }
 
     public void Die()
-    { 
+    {
         if (isDead) return;
         isDead = true;
         //Destroy(gameObject);
@@ -65,5 +65,25 @@ public class Health : MonoBehaviour
             }
         }
         Destroy(gameObject);
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene("DeadScene");
+
+        //DieAndReturnToMenu();
     }
+
+    /*
+    [PunRPC]
+    public void DieAndReturnToMenu()
+    {
+        if (isDead) return;
+        isDead = true;
+
+        if (isLocalPlayer)
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene");
+        }
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene");
+    }
+    */
 }
