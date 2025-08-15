@@ -51,7 +51,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         if (_player.GetComponent<PhotonView>().IsMine)
         {
             _player.GetComponent<Health>().isLocalPlayer = true;
-
+            
             InstantiatePlayerSkin(_player);
         }
 
@@ -72,6 +72,14 @@ public class RoomManager : MonoBehaviourPunCallbacks
             return;
         }
 
+        Transform cameraTransform = playerObject.transform.Find("MainCamera");
+
+        if (cameraTransform == null)
+        {
+            Debug.LogError("Camera object not found in the player prefab.");
+            return;
+        }
+        
         GameObject skinPrefab = Resources.Load<GameObject>(skinName);
 
         if (skinPrefab == null)
@@ -80,12 +88,9 @@ public class RoomManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        GameObject skinInstance = Instantiate(skinPrefab, playerObject.transform);
+        GameObject skinInstance = Instantiate(skinPrefab, cameraTransform);
 
-        skinInstance.transform.localPosition = new Vector3(0f, -1f, 0f);
-        skinInstance.transform.localRotation = Quaternion.identity;
-
-        Debug.Log($"Skin '{skinName}' has been instantiated on the local player object.");
+        Debug.Log($"Skin '{skinName}' has been instantiated on the local player's camera.");
     }
 
     public Transform GetSpawnPoint()
