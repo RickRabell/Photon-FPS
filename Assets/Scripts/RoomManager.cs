@@ -16,12 +16,18 @@ public class RoomManager : MonoBehaviourPunCallbacks
     [Header("Camera")]
     public GameObject roomCam;
 
+    [Header("Name Tag")]
+    public GameObject nameTagPrefab; // Referencia a tu prefab de la etiqueta de nombre.
+    public float nameTagHeightOffset = 2.5f; // Altura sobre el jugador.
+
+    // ------------------------------------------------------------------------------------------------
     [Header("UI")]
     public GameObject victoryScreen;
     public TextMeshProUGUI victoryText;
 
     private List<GameObject> alivePlayers = new List<GameObject>();
     private bool gameEnded = false;
+    // ------------------------------------------------------------------------------------------------
 
     void Awake()
     {
@@ -51,7 +57,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
         if (_player.GetComponent<PhotonView>().IsMine)
         {
             _player.GetComponent<Health>().isLocalPlayer = true;
-            
             InstantiatePlayerSkin(_player);
         }
 
@@ -59,11 +64,31 @@ public class RoomManager : MonoBehaviourPunCallbacks
         Debug.Log($"Player spawned: {_player.name} at {point.position} with {PhotonNetwork.LocalPlayer.ActorNumber}");
         _player.GetComponent<Health>().onDeath += OnPlayerDeath;
 
+        // Se usa un RPC para que todos los clientes instancien y asignen el nombre de la etiqueta.
+        photonView.RPC("SpawnNameTag", RpcTarget.AllBuffered, _player.GetComponent<PhotonView>().ViewID, PhotonNetwork.LocalPlayer.NickName);
+
         roomCam.GetComponentInChildren<Canvas>().enabled = false;
+    }
+
+    [PunRPC]
+    private void SpawnNameTag(int playerViewID, string playerName)
+    {
+        PhotonView playerView = PhotonView.Find(playerViewID);
+        if (playerView == null) return;
+
+        GameObject nameTagInstance = Instantiate(nameTagPrefab, playerView.transform);
+        nameTagInstance.transform.localPosition = new Vector3(0, nameTagHeightOffset, 0);
+
+        TextMeshProUGUI nameText = nameTagInstance.GetComponentInChildren<TextMeshProUGUI>();
+        if (nameText != null)
+        {
+            nameText.text = playerName;
+        }
     }
 
     private void InstantiatePlayerSkin(GameObject playerObject)
     {
+        // Tu método actual para instanciar la skin
         string skinName = Singleton.Instance.GetPlayerSkin();
 
         if (string.IsNullOrEmpty(skinName))
@@ -72,14 +97,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        Transform cameraTransform = playerObject.transform.Find("MainCamera");
-
-        if (cameraTransform == null)
-        {
-            Debug.LogError("Camera object not found in the player prefab.");
-            return;
-        }
-        
         GameObject skinPrefab = Resources.Load<GameObject>(skinName);
 
         if (skinPrefab == null)
@@ -88,9 +105,11 @@ public class RoomManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        GameObject skinInstance = Instantiate(skinPrefab, cameraTransform);
+        GameObject skinInstance = Instantiate(skinPrefab, playerObject.transform);
+        skinInstance.transform.localPosition = new Vector3(0f, -1f, 0f);
+        skinInstance.transform.localRotation = Quaternion.identity;
 
-        Debug.Log($"Skin '{skinName}' has been instantiated on the local player's camera.");
+        Debug.Log($"Skin '{skinName}' has been instantiated on the local player object with an offset.");
     }
 
     public Transform GetSpawnPoint()
