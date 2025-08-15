@@ -29,6 +29,11 @@ public class Weapon : MonoBehaviour
     public Animation animation;
     public AnimationClip reload;
 
+    //[Header("Sound")]
+    //public AudioSource audioSource;
+    //public AudioClip fireSound;
+
+
     void Start()
     {
         magText.text = mag.ToString();
@@ -78,6 +83,7 @@ public class Weapon : MonoBehaviour
     void Fire()
     {
         Ray ray = new Ray(origin: camera.transform.position, direction: camera.transform.forward);
+        PlayShotSound playShotSound = GetComponent<PlayShotSound>();
 
         RaycastHit hit;
 
@@ -91,5 +97,32 @@ public class Weapon : MonoBehaviour
                 hit.transform.gameObject.GetComponent<PhotonView>().RPC(methodName: "TakeDamage", RpcTarget.All, damage);
             }
         }
+
+        if (playShotSound != null)
+        {
+            playShotSound.PlayShot();
+            // O para llamar el RPC directamente:
+            playShotSound.GetComponent<PhotonView>().RPC("RPC_PlayShot", RpcTarget.All);
+        }
     }
+
+    /*
+    public void PlayShot()
+    {
+        if(!fireSound || !audioSource) return;
+
+        audioSource.PlayOneShot(fireSound);
+
+        if(GetComponent<PhotonView>().IsMine)
+        {
+            GetComponent<PhotonView>().RPC(nameof(RPC_PlayShot), RpcTarget.Others);
+        }
+    }
+
+    [PunRPC]
+    public void RPC_PlayShot()
+    {
+        if (fireSound && audioSource) audioSource.PlayOneShot(fireSound);
+    }
+    */
 }
