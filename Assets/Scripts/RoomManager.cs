@@ -92,18 +92,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     private void InstantiatePlayerSkin(GameObject playerObject)
     {
-        // Get skin name from instantiation data for networked players
-        string skinName = null;
-        PhotonView pv = playerObject.GetComponent<PhotonView>();
-        if (pv != null && pv.InstantiationData != null && pv.InstantiationData.Length > 0)
-        {
-            skinName = pv.InstantiationData[0] as string;
-        }
-        else
-        {
-            // Fallback for local player
-            skinName = Singleton.Instance.GetPlayerSkin();
-        }
+        // Tu método actual para instanciar la skin
+        string skinName = Singleton.Instance.GetPlayerSkin();
 
         if (string.IsNullOrEmpty(skinName))
         {
@@ -123,10 +113,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         skinInstance.transform.localPosition = new Vector3(0f, -1f, 0f);
         skinInstance.transform.localRotation = Quaternion.identity;
 
-        // Ensure the skin is instantiated for all copies of the player object (local and remote)
-        // This method is called for every networked instance, so all clients will see the correct skin.
-
-        Debug.Log($"Skin '{skinName}' has been instantiated on the player object with an offset.");
+        Debug.Log($"Skin '{skinName}' has been instantiated on the local player object with an offset.");
     }
 
     public Transform GetSpawnPoint()
