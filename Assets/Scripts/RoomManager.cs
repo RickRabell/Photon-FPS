@@ -67,6 +67,12 @@ public class RoomManager : MonoBehaviourPunCallbacks
         roomCam.GetComponentInChildren<Canvas>().enabled = false;
     }
 
+    // Plan (pseudocode):
+    // 1. Identify which object could be null in the line:
+    //    photonView.RPC("SetSkinParent", RpcTarget.AllBuffered, skinInstance.GetComponent<PhotonView>().ViewID, playerObject.GetComponent<PhotonView>().ViewID);
+    // 2. The possible nulls are: photonView, skinInstance, playerObject, skinInstance.GetComponent<PhotonView>(), playerObject.GetComponent<PhotonView>().
+    // 3. Add null checks before calling RPC to log errors and prevent the exception.
+
     private void InstantiatePlayerSkin(GameObject playerObject, string skinName)
     {
         GameObject skinPrefab = Resources.Load<GameObject>(skinName);
@@ -77,17 +83,39 @@ public class RoomManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        // Instancia el skin en la misma posición y rotación que el jugador, pero -1 en Y
         Vector3 skinPosition = playerObject.transform.position;
         skinPosition.y -= 1f;
 
         GameObject skinInstance = PhotonNetwork.Instantiate(skinName, skinPosition, playerObject.transform.rotation, 0, new object[] { playerObject.GetComponent<PhotonView>().ViewID });
 
-        // Haz que el skin sea hijo del objeto jugador en todos los clientes
         if (skinInstance != null && playerObject != null)
         {
             skinInstance.transform.SetParent(playerObject.transform, true);
-            photonView.RPC("SetSkinParent", RpcTarget.AllBuffered, skinInstance.GetComponent<PhotonView>().ViewID, playerObject.GetComponent<PhotonView>().ViewID);
+
+            var skinPV = skinInstance.GetComponent<PhotonView>();
+            var playerPV = playerObject.GetComponent<PhotonView>();
+
+            if (photonView == null)
+            {
+                Debug.LogError("RoomManager's photonView is null.");
+                return;
+            }
+            if (skinPV == null)
+            {
+                Debug.LogError("Skin instance PhotonView is null.");
+                return;
+            }
+            if (playerPV == null)
+            {
+                Debug.LogError("Player object PhotonView is null.");
+                return;
+            }
+
+            photonView.RPC("SetSkinParent", RpcTarget.AllBuffered, skinPV.ViewID, playerPV.ViewID);
+        }
+        else
+        {
+            Debug.LogError("Skin instance or player object is null.");
         }
 
         Debug.Log($"Skin '{skinName}' has been instantiated and parented to the player's GameObject.");
