@@ -17,15 +17,17 @@ public class RoomManager : MonoBehaviourPunCallbacks
     public GameObject roomCam;
 
     [Header("Name Tag")]
-    public GameObject nameTagPrefab;
-    public float nameTagHeightOffset = 2.5f;
+    public GameObject nameTagPrefab; // Referencia a tu prefab de la etiqueta de nombre.
+    public float nameTagHeightOffset = 2.5f; // Altura sobre el jugador.
 
+    // ------------------------------------------------------------------------------------------------
     [Header("UI")]
     public GameObject victoryScreen;
     public TextMeshProUGUI victoryText;
 
     private List<GameObject> alivePlayers = new List<GameObject>();
     private bool gameEnded = false;
+    // ------------------------------------------------------------------------------------------------
 
     void Awake()
     {
@@ -42,12 +44,14 @@ public class RoomManager : MonoBehaviourPunCallbacks
         }
     }
 
-    // Only one SpawnPlayers method, using RPC for skin instantiation
+    public override void OnJoinedRoom() => SpawnPlayers();
+
     public void SpawnPlayers()
     {
         if (spawned) return;
 
         Transform point = GetSpawnPoint();
+        // Pasa el nombre del skin como dato de instanciación ------------------
         string skinName = Singleton.Instance.GetPlayerSkin();
         object[] instantiationData = new object[] { skinName };
         GameObject _player = PhotonNetwork.Instantiate(playerPrefabName, point.position, point.rotation, 0, instantiationData);
@@ -56,24 +60,15 @@ public class RoomManager : MonoBehaviourPunCallbacks
         if (_player.GetComponent<PhotonView>().IsMine)
         {
             _player.GetComponent<Health>().isLocalPlayer = true;
-
-            GameObject skinPrefab = Resources.Load<GameObject>(skinName);
-            if (skinPrefab != null)
-            {
-                GameObject skinInstance = Instantiate(skinPrefab, _player.transform);
-                skinInstance.transform.localPosition = new Vector3(0f, -1f, 0f);
-                skinInstance.transform.localRotation = Quaternion.identity;
-            }
         }
+
+        InstantiatePlayerSkin(_player);
 
         alivePlayers.Add(_player);
         Debug.Log($"Player spawned: {_player.name} at {point.position} with {PhotonNetwork.LocalPlayer.ActorNumber}");
         _player.GetComponent<Health>().onDeath += OnPlayerDeath;
 
-        // Use RPC to instantiate skin for all clients
-        photonView.RPC("InstantiatePlayerSkinRPC", RpcTarget.AllBuffered, _player.GetComponent<PhotonView>().ViewID, skinName);
-
-        // Use RPC to instantiate name tag for all clients
+        // Se usa un RPC para que todos los clientes instancien y asignen el nombre de la etiqueta.
         photonView.RPC("SpawnNameTag", RpcTarget.AllBuffered, _player.GetComponent<PhotonView>().ViewID, PhotonNetwork.LocalPlayer.NickName);
 
         roomCam.GetComponentInChildren<Canvas>().enabled = false;
@@ -95,12 +90,20 @@ public class RoomManager : MonoBehaviourPunCallbacks
         }
     }
 
-    // RPC for skin instantiation
-    [PunRPC]
-    private void InstantiatePlayerSkinRPC(int playerViewID, string skinName)
+    private void InstantiatePlayerSkin(GameObject playerObject)
     {
-        PhotonView playerView = PhotonView.Find(playerViewID);
-        if (playerView == null) return;
+        // Get skin name from instantiation data for networked players
+        string skinName = null;
+        PhotonView pv = playerObject.GetComponent<PhotonView>();
+        if (pv != null && pv.InstantiationData != null && pv.InstantiationData.Length > 0)
+        {
+            skinName = pv.InstantiationData[0] as string;
+        }
+        else
+        {
+            // Fallback for local player
+            skinName = Singleton.Instance.GetPlayerSkin();
+        }
 
         if (string.IsNullOrEmpty(skinName))
         {
@@ -116,15 +119,15 @@ public class RoomManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        GameObject skinInstance = Instantiate(skinPrefab, playerView.transform);
+        GameObject skinInstance = Instantiate(skinPrefab, playerObject.transform);
         skinInstance.transform.localPosition = new Vector3(0f, -1f, 0f);
         skinInstance.transform.localRotation = Quaternion.identity;
 
+        // Ensure the skin is instantiated for all copies of the player object (local and remote)
+        // This method is called for every networked instance, so all clients will see the correct skin.
+
         Debug.Log($"Skin '{skinName}' has been instantiated on the player object with an offset.");
     }
-
-    // Remove local skin instantiation, only use RPC
-    // private void InstantiatePlayerSkin(GameObject playerObject) { ... } // REMOVE THIS METHOD
 
     public Transform GetSpawnPoint()
     {
