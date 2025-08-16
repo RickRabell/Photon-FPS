@@ -17,15 +17,17 @@ public class RoomManager : MonoBehaviourPunCallbacks
     public GameObject roomCam;
 
     [Header("Name Tag")]
-    public GameObject nameTagPrefab;
-    public float nameTagHeightOffset = 2.5f;
+    public GameObject nameTagPrefab; // Referencia a tu prefab de la etiqueta de nombre.
+    public float nameTagHeightOffset = 2.5f; // Altura sobre el jugador.
 
+    // ------------------------------------------------------------------------------------------------
     [Header("UI")]
     public GameObject victoryScreen;
     public TextMeshProUGUI victoryText;
 
     private List<GameObject> alivePlayers = new List<GameObject>();
     private bool gameEnded = false;
+    // ------------------------------------------------------------------------------------------------
 
     void Awake()
     {
@@ -49,59 +51,68 @@ public class RoomManager : MonoBehaviourPunCallbacks
         if (spawned) return;
 
         Transform point = GetSpawnPoint();
-        GameObject _player = PhotonNetwork.Instantiate(playerPrefabName, point.position, point.rotation);
+        // Pasa el nombre del skin como dato de instanciación ------------------
+        string skinName = Singleton.Instance.GetPlayerSkin();
+        object[] instantiationData = new object[] { skinName };
+        GameObject _player = PhotonNetwork.Instantiate(playerPrefabName, point.position, point.rotation, 0, instantiationData);
         spawned = true;
 
         if (_player.GetComponent<PhotonView>().IsMine)
         {
             _player.GetComponent<Health>().isLocalPlayer = true;
+            InstantiatePlayerSkin(_player);
         }
 
         alivePlayers.Add(_player);
         Debug.Log($"Player spawned: {_player.name} at {point.position} with {PhotonNetwork.LocalPlayer.ActorNumber}");
         _player.GetComponent<Health>().onDeath += OnPlayerDeath;
 
-        // Se usa un RPC para que todos los clientes instancien la skin y el nombre.
-        string skinName = Singleton.Instance.GetPlayerSkin();
-        photonView.RPC("SpawnPlayerExtras", RpcTarget.AllBuffered, _player.GetComponent<PhotonView>().ViewID, PhotonNetwork.LocalPlayer.NickName, skinName);
+        // Se usa un RPC para que todos los clientes instancien y asignen el nombre de la etiqueta.
+        photonView.RPC("SpawnNameTag", RpcTarget.AllBuffered, _player.GetComponent<PhotonView>().ViewID, PhotonNetwork.LocalPlayer.NickName);
 
         roomCam.GetComponentInChildren<Canvas>().enabled = false;
     }
 
     [PunRPC]
-    private void SpawnPlayerExtras(int playerViewID, string playerName, string skinName)
+    private void SpawnNameTag(int playerViewID, string playerName)
     {
         PhotonView playerView = PhotonView.Find(playerViewID);
         if (playerView == null) return;
 
-        // Lógica para instanciar la etiqueta de nombre
-        if (nameTagPrefab != null)
-        {
-            GameObject nameTagInstance = Instantiate(nameTagPrefab, playerView.transform);
-            nameTagInstance.transform.localPosition = new Vector3(0, nameTagHeightOffset, 0);
+        GameObject nameTagInstance = Instantiate(nameTagPrefab, playerView.transform);
+        nameTagInstance.transform.localPosition = new Vector3(0, nameTagHeightOffset, 0);
 
-            TextMeshProUGUI nameText = nameTagInstance.GetComponentInChildren<TextMeshProUGUI>();
-            if (nameText != null)
-            {
-                nameText.text = playerName;
-            }
+        TextMeshProUGUI nameText = nameTagInstance.GetComponentInChildren<TextMeshProUGUI>();
+        if (nameText != null)
+        {
+            nameText.text = playerName;
+        }
+    }
+
+    private void InstantiatePlayerSkin(GameObject playerObject)
+    {
+        // Tu método actual para instanciar la skin
+        string skinName = Singleton.Instance.GetPlayerSkin();
+
+        if (string.IsNullOrEmpty(skinName))
+        {
+            Debug.LogWarning("No skin selected from the lobby.");
+            return;
         }
 
-        // Lógica para instanciar la skin
-        if (!string.IsNullOrEmpty(skinName))
+        GameObject skinPrefab = Resources.Load<GameObject>(skinName);
+
+        if (skinPrefab == null)
         {
-            GameObject skinPrefab = Resources.Load<GameObject>(skinName);
-            if (skinPrefab != null)
-            {
-                GameObject skinInstance = Instantiate(skinPrefab, playerView.transform);
-                skinInstance.transform.localPosition = new Vector3(0f, -1f, 0f);
-                skinInstance.transform.localRotation = Quaternion.identity;
-            }
-            else
-            {
-                Debug.LogError($"Skin prefab '{skinName}' not found in Resources folder.");
-            }
+            Debug.LogError($"Skin prefab '{skinName}' not found in Resources folder.");
+            return;
         }
+
+        GameObject skinInstance = Instantiate(skinPrefab, playerObject.transform);
+        skinInstance.transform.localPosition = new Vector3(0f, -1f, 0f);
+        skinInstance.transform.localRotation = Quaternion.identity;
+
+        Debug.Log($"Skin '{skinName}' has been instantiated on the local player object with an offset.");
     }
 
     public Transform GetSpawnPoint()
