@@ -16,6 +16,11 @@ public class RoomManager : MonoBehaviourPunCallbacks
     [Header("Camera")]
     public GameObject roomCam;
 
+    [Header("Name Tag")]
+    public GameObject nameTagPrefab; // Referencia a tu prefab de la etiqueta de nombre.
+    public float nameTagHeightOffset = 2.5f; // Altura sobre el jugador.
+
+    // ------------------------------------------------------------------------------------------------
     [Header("UI")]
     public GameObject victoryScreen;
     public TextMeshProUGUI victoryText;
@@ -38,8 +43,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
         }
     }
 
-    public override void OnJoinedRoom() => SpawnPlayers();
-
     public void SpawnPlayers()
     {
         if (spawned) return;
@@ -47,15 +50,14 @@ public class RoomManager : MonoBehaviourPunCallbacks
         Transform point = GetSpawnPoint();
         // Pasa el nombre del skin como dato de instanciación ------------------
         string skinName = Singleton.Instance.GetPlayerSkin();
-        object[] instantiationData = new object[] { skinName };
-        GameObject _player = PhotonNetwork.Instantiate(playerPrefabName, point.position, point.rotation, 0, instantiationData);
+        GameObject _player = PhotonNetwork.Instantiate(playerPrefabName, point.position, point.rotation);
         spawned = true;
 
         if (_player.GetComponent<PhotonView>().IsMine)
         {
             _player.GetComponent<Health>().isLocalPlayer = true;
-            
-            InstantiatePlayerSkin(_player);
+
+            InstantiatePlayerSkin(_player, skinName);
         }
 
         alivePlayers.Add(_player);
@@ -65,23 +67,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
         roomCam.GetComponentInChildren<Canvas>().enabled = false;
     }
 
-    private void InstantiatePlayerSkin(GameObject playerObject)
+    private void InstantiatePlayerSkin(GameObject playerObject, string skinName)
     {
-        string skinName = Singleton.Instance.GetPlayerSkin();
-
-        if (string.IsNullOrEmpty(skinName))
-        {
-            Debug.LogWarning("No skin selected from the lobby.");
-            return;
-        }
-
-        Transform cameraTransform = playerObject.transform.Find("MainCamera");
-
-        if (cameraTransform == null)
-        {
-            Debug.LogError("Camera object not found in the player prefab.");
-            return;
-        }
         
         GameObject skinPrefab = Resources.Load<GameObject>(skinName);
 
@@ -91,7 +78,12 @@ public class RoomManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        GameObject skinInstance = Instantiate(skinPrefab, cameraTransform);
+        GameObject skinInstance = Instantiate(skinPrefab, playerObject.transform);
+        skinInstance.transform.localPosition = new Vector3(0f, -1f, 0f);
+        skinInstance.transform.localRotation = Quaternion.identity;
+
+        // instantiate the skin on photon network to ensure all players see it
+        PhotonNetwork.Instantiate(skinName, skinInstance.transform.position, skinInstance.transform.rotation, 0, new object[] { PhotonNetwork.LocalPlayer.ActorNumber });
 
         Debug.Log($"Skin '{skinName}' has been instantiated on the local player's camera.");
     }
@@ -165,7 +157,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
         if (victoryScreen != null && victoryText != null)
         {
             victoryScreen.SetActive(true);
-            victoryText.text = $"Winner: {winner}";
         }
     }
 }
