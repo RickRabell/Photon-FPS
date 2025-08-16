@@ -124,13 +124,32 @@ public class RoomManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void SetSkinParent(int skinViewID, int playerViewID)
     {
-        PhotonView skinPV = PhotonView.Find(skinViewID);
-        PhotonView playerPV = PhotonView.Find(playerViewID);
+        StartCoroutine(TrySetSkinParentCoroutine(skinViewID, playerViewID));
+    }
 
-        if (skinPV != null && playerPV != null)
+    private System.Collections.IEnumerator TrySetSkinParentCoroutine(int skinViewID, int playerViewID)
+    {
+        float timeout = 2f;
+        float timer = 0f;
+        PhotonView skinPV = null;
+        PhotonView playerPV = null;
+
+        while (timer < timeout)
         {
-            skinPV.transform.SetParent(playerPV.transform, true);
+            skinPV = PhotonView.Find(skinViewID);
+            playerPV = PhotonView.Find(playerViewID);
+
+            if (skinPV != null && playerPV != null)
+            {
+                skinPV.transform.SetParent(playerPV.transform, true);
+                yield break;
+            }
+
+            timer += Time.deltaTime;
+            yield return null;
         }
+
+        Debug.LogError($"[RoomManager] Could not find skin or player PhotonView for parenting after retry. SkinViewID: {skinViewID}, PlayerViewID: {playerViewID}");
     }
 
     public Transform GetSpawnPoint()
