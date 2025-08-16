@@ -69,7 +69,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     private void InstantiatePlayerSkin(GameObject playerObject, string skinName)
     {
-        
         GameObject skinPrefab = Resources.Load<GameObject>(skinName);
 
         if (skinPrefab == null)
@@ -78,14 +77,32 @@ public class RoomManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        GameObject skinInstance = Instantiate(skinPrefab, playerObject.transform);
-        skinInstance.transform.localPosition = new Vector3(0f, -1f, 0f);
-        skinInstance.transform.localRotation = Quaternion.identity;
+        // Instancia el skin en la misma posición y rotación que el jugador, pero -1 en Y
+        Vector3 skinPosition = playerObject.transform.position;
+        skinPosition.y -= 1f;
 
-        // instantiate the skin on photon network to ensure all players see it
-        PhotonNetwork.Instantiate(skinName, skinInstance.transform.position, skinInstance.transform.rotation, 0, new object[] { PhotonNetwork.LocalPlayer.ActorNumber });
+        GameObject skinInstance = PhotonNetwork.Instantiate(skinName, skinPosition, playerObject.transform.rotation, 0, new object[] { playerObject.GetComponent<PhotonView>().ViewID });
 
-        Debug.Log($"Skin '{skinName}' has been instantiated on the local player's camera.");
+        // Haz que el skin sea hijo del objeto jugador en todos los clientes
+        if (skinInstance != null && playerObject != null)
+        {
+            skinInstance.transform.SetParent(playerObject.transform, true);
+            photonView.RPC("SetSkinParent", RpcTarget.AllBuffered, skinInstance.GetComponent<PhotonView>().ViewID, playerObject.GetComponent<PhotonView>().ViewID);
+        }
+
+        Debug.Log($"Skin '{skinName}' has been instantiated and parented to the player's GameObject.");
+    }
+
+    [PunRPC]
+    private void SetSkinParent(int skinViewID, int playerViewID)
+    {
+        PhotonView skinPV = PhotonView.Find(skinViewID);
+        PhotonView playerPV = PhotonView.Find(playerViewID);
+
+        if (skinPV != null && playerPV != null)
+        {
+            skinPV.transform.SetParent(playerPV.transform, true);
+        }
     }
 
     public Transform GetSpawnPoint()
